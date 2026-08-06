@@ -11,8 +11,12 @@ import Vote from "./pages/Vote";
 import News from "./pages/News";
 import Discuss from "./pages/Discuss";
 import Events from "./pages/Events";
+import Auth from "./pages/Auth";
+import { useEffect } from "react";
+import { useGetMeQuery } from "./redux/services/authApi";
 
 export default function App() {
+  const data = useGetMeQuery();
   return (
     <BrowserRouter>
       <Navbar />
@@ -26,6 +30,7 @@ export default function App() {
         <Route path="/news" element={<News />} />
         <Route path="/discuss" element={<Discuss />} />
         <Route path="/events" element={<Events />} />
+        <Route path="/auth" element={<Auth />} />
       </Routes>
       <Footer />
     </BrowserRouter>
