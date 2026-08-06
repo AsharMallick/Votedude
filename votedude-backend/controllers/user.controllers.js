@@ -17,7 +17,9 @@ exports.register = catchAsyncError(async (req, res, next) => {
 
   let user = await User.findOne({ email });
   if (user) {
-    return next(new ErrorHandler("An account with this email already exists", 400));
+    return next(
+      new ErrorHandler("An account with this email already exists", 400),
+    );
   }
 
   user = await User.create({
@@ -37,7 +39,8 @@ exports.register = catchAsyncError(async (req, res, next) => {
     .cookie("token", token, {
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       httpOnly: true,
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     })
     .json({
       success: true,
@@ -70,7 +73,8 @@ exports.login = catchAsyncError(async (req, res, next) => {
     .cookie("token", token, {
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       httpOnly: true,
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     })
     .json({
       success: true,
@@ -85,6 +89,8 @@ exports.logout = catchAsyncError(async (req, res, next) => {
     .cookie("token", null, {
       expires: new Date(Date.now()),
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     })
     .json({
       success: true,
@@ -106,7 +112,7 @@ exports.getMyDetails = catchAsyncError(async (req, res, next) => {
 
 exports.getProfile = catchAsyncError(async (req, res, next) => {
   const user = await User.findById(req.params.id).select(
-    "name email photo city points badges role createdAt"
+    "name email photo city points badges role createdAt",
   );
   if (!user) return next(new ErrorHandler("User not found", 404));
 
