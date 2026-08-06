@@ -1,11 +1,17 @@
 const mongoose = require("mongoose");
 
+let isConnected = false;
+
 exports.connectDB = async () => {
+  if (isConnected) return;
+
   mongoose.set("strictQuery", false);
-  await mongoose
-    .connect(process.env.MONGO_URI, {
-      dbName: "VoteDude",
-    })
-    .then(() => console.log("DB connected"))
-    .catch((e) => console.log(`Some error occured => ${e}`));
+
+  await mongoose.connect(process.env.MONGO_URI, {
+    dbName: "VoteDude",
+  });
+
+  isConnected = true;
+
+  console.log("DB connected");
 };
