@@ -1,3 +1,5 @@
+const User = require("../models/User.model");
+
 const POINTS = {
   REGISTER: 10,
   ATTEND_EVENT: 5,
@@ -15,18 +17,27 @@ const BADGE_RULES = [
   { badge: "League Champion", minPoints: 250 },
 ];
 
-// call after any point-earning action — mutates and saves the user doc
 exports.awardPoints = async (user, actionKey) => {
   const amount = POINTS[actionKey] || 0;
-  user.points += amount;
+  if (!amount || !user?._id) return user;
+
+  const current = await User.findById(user._id).select("points badges");
+  if (!current) return user;
+
+  const points = (current.points || 0) + amount;
+  const badges = [...(current.badges || [])];
 
   BADGE_RULES.forEach(({ badge, minPoints }) => {
-    if (user.points >= minPoints && !user.badges.includes(badge)) {
-      user.badges.push(badge);
+    if (points >= minPoints && !badges.includes(badge)) {
+      badges.push(badge);
     }
   });
 
-  await user.save();
+  // update only points/badges — skips full document validation
+  await User.findByIdAndUpdate(user._id, { points, badges });
+
+  user.points = points;
+  user.badges = badges;
   return user;
 };
 

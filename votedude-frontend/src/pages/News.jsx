@@ -1,143 +1,136 @@
-import React from "react";
+import { useGetNewsQuery } from "../redux/services/newsApi";
 
-const featuredNews = {
-  category: "ECONOMY",
-  date: "May 20, 2026",
-  readTime: "4 min",
-  title: "House Passes Bill to Cut Federal Spending by $400B",
-  description:
-    "The measure advances to the Senate after a narrow vote, setting up a fall showdown over the federal budget and the programs it funds.",
-  image: "https://picsum.photos/900/600?random=1",
-};
+export default function News() {
+  const { data, isLoading, isError, error } = useGetNewsQuery();
+  const articles = data?.news || [];
 
-const news = [
-  {
-    category: "SECURITY",
-    date: "May 19, 2026",
-    readTime: "3 min",
-    title: "New Border Security Measures Announced",
-    image: "https://picsum.photos/500/350?random=2",
-  },
-  {
-    category: "VETERANS",
-    date: "May 18, 2026",
-    readTime: "5 min",
-    title: "VA Expands Mental Health Support for Veterans",
-    image: "https://picsum.photos/500/350?random=3",
-  },
-  {
-    category: "ENERGY",
-    date: "May 17, 2026",
-    readTime: "3 min",
-    title: "Energy Bill Clears Committee With Bipartisan Support",
-    image: "https://picsum.photos/500/350?random=4",
-  },
-  {
-    category: "ECONOMY",
-    date: "May 16, 2026",
-    readTime: "4 min",
-    title: "Small Business Owners Rally for Tax Relief",
-    image: "https://picsum.photos/500/350?random=5",
-  },
-  {
-    category: "REFORM",
-    date: "May 15, 2026",
-    readTime: "6 min",
-    title: "Term Limits Movement Gains Momentum in 12 States",
-    image: "https://picsum.photos/500/350?random=6",
-  },
-];
+  const featured = articles[0];
+  const rest = articles.slice(1);
 
-const News = () => {
+  if (isLoading) {
+    return <p className="text-center text-gray-500 py-32">Loading news...</p>;
+  }
+
+  if (isError) {
+    return (
+      <p className="text-center text-red-500 py-32">
+        {error?.data?.message || "Failed to load news"}
+      </p>
+    );
+  }
+
   return (
-    <div className="bg-white min-h-screen">
+    <div>
       {/* Hero */}
-      <section className="bg-[#e1e1e1] border border-[#00000031]">
-        <div className="max-w-7xl mx-auto px-6 py-20">
-          <p className="uppercase tracking-[3px] text-xs font-bold text-[#5F9F84] mb-4">
-            Latest News
-          </p>
-
-          <h1 className="text-5xl font-black text-[#232323]">
-            Straight facts. No spin.
-          </h1>
-
-          <p className="text-gray-500 text-lg mt-6 max-w-xl">
-            Nonpartisan reporting on the votes, bills, and decisions that shape
-            your day-to-day.
-          </p>
-        </div>
-      </section>
-
-      {/* Content */}
-      <section className="max-w-7xl mx-auto px-6 py-14">
-        {/* Featured Story */}
-        <div className="border border-gray-200 rounded-2xl overflow-hidden grid lg:grid-cols-2 mb-8">
-          <img
-            src={featuredNews.image}
-            alt={featuredNews.title}
-            className="w-full h-[420px] object-cover"
-          />
-
-          <div className="p-10 flex flex-col justify-center">
-            <div className="flex items-center gap-3 text-xs mb-5">
-              <span className="bg-green-100 text-[#5F9F84] px-3 py-1 rounded-full font-semibold uppercase">
-                {featuredNews.category}
-              </span>
-
-              <span className="text-gray-400">
-                {featuredNews.date} • {featuredNews.readTime}
-              </span>
-            </div>
-
-            <h2 className="text-4xl font-extrabold text-gray-900 leading-tight">
-              {featuredNews.title}
-            </h2>
-
-            <p className="text-gray-500 mt-5 leading-7">
-              {featuredNews.description}
+      <div className="bg-[#e1e1e1] border border-[#00000031]">
+        <section className="flex flex-col justify-start w-[80%] mx-auto pt-14 pb-16 pl-10 px-4 sm:px-6">
+          <div>
+            <p className="text-[13px] font-extrabold text-vd-green tracking-wide uppercase mb-3">
+              Latest News
             </p>
-
-            <button className="text-[#5F9F84] font-semibold mt-8 text-left hover:underline">
-              Read full story →
-            </button>
+            <h1 className="text-[2.4rem] sm:text-[2.75rem] font-bold tracking-tight text-gray-900 leading-tight mb-4">
+              Straight facts. No spin.
+            </h1>
+            <p className="text-[15.5px] text-gray-600 leading-relaxed w-1/2">
+              Nonpartisan reporting on the votes, bills, and decisions that
+              shape your day-to-day.
+            </p>
           </div>
-        </div>
+        </section>
+      </div>
 
-        {/* News Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {news.map((item, index) => (
-            <div
-              key={index}
-              className="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition duration-300"
-            >
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-56 object-cover"
-              />
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+        {articles.length === 0 && (
+          <p className="text-center text-gray-500 py-20">
+            No news yet. Check back soon.
+          </p>
+        )}
 
-              <div className="p-5">
-                <div className="flex gap-2 items-center text-[11px] mb-3">
-                  <span className="uppercase font-bold text-[#5F9F84]">
-                    {item.category}
-                  </span>
-
-                  <span className="text-gray-400">• {item.readTime}</span>
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 leading-snug mb-4">
-                  {item.title}
-                </h3>
-
-                <p className="text-sm text-gray-400">{item.date}</p>
+        {featured && (
+          <div className="grid lg:grid-cols-2 gap-6 mb-10">
+            {/* Featured card */}
+            <article className="bg-white border border-[#00000031] rounded-2xl overflow-hidden flex flex-col">
+              <div className="h-56 bg-gray-100">
+                {featured.image ? (
+                  <img
+                    src={featured.image}
+                    alt={featured.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-4xl">
+                    📰
+                  </div>
+                )}
               </div>
+              <div className="p-6 flex flex-col flex-1">
+                <div className="flex items-center gap-2 text-[12px] mb-2">
+                  <span className="font-extrabold text-vd-green uppercase tracking-wide">
+                    {featured.category}
+                  </span>
+                  <span className="text-gray-400">·</span>
+                  <span className="text-gray-500">
+                    {featured.createdAt
+                      ? new Date(featured.createdAt).toLocaleDateString()
+                      : ""}
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2 leading-snug">
+                  {featured.title}
+                </h2>
+                <p className="text-[14px] text-gray-600 leading-relaxed mb-4 line-clamp-3 flex-1">
+                  {featured.content}
+                </p>
+                <button className="self-start text-[13px] font-medium text-vd-green hover:text-vd-green-dark transition-colors">
+                  Read full story →
+                </button>
+              </div>
+            </article>
+
+            {/* Side list */}
+            <div className="flex flex-col gap-4">
+              {rest.map((item) => (
+                <article
+                  key={item._id}
+                  className="bg-white border border-[#00000031] rounded-xl p-4 flex gap-4 hover:shadow-sm transition-shadow"
+                >
+                  <div className="w-24 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 text-2xl">
+                        📰
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex flex-col flex-1">
+                    <div className="text-[11px] font-extrabold text-vd-green uppercase tracking-wide mb-1">
+                      {item.category}
+                    </div>
+                    <h3 className="font-semibold text-[15px] text-gray-900 leading-snug line-clamp-2 mb-1">
+                      {item.title}
+                    </h3>
+                    <div className="mt-auto flex items-center justify-between gap-2">
+                      <span className="text-[12px] text-gray-400">
+                        {item.createdAt
+                          ? new Date(item.createdAt).toLocaleDateString()
+                          : ""}
+                      </span>
+                      <button className="text-[12px] font-medium text-vd-green hover:text-vd-green-dark whitespace-nowrap">
+                        Read more →
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </section>
     </div>
   );
-};
-
-export default News;
+}

@@ -3,11 +3,15 @@ const mongoose = require("mongoose");
 const replySchema = new mongoose.Schema(
   {
     post: { type: mongoose.Schema.Types.ObjectId, ref: "Post", required: true },
-    author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     content: { type: String, required: true },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const postSchema = new mongoose.Schema(
@@ -16,15 +20,30 @@ const postSchema = new mongoose.Schema(
     content: { type: String, required: true },
     category: {
       type: String,
-      enum: ["National Politics", "Local Politics", "Sports", "Current Events", "Community", "Ideas"],
+      enum: [
+        "National Politics",
+        "Local Politics",
+        "Sports",
+        "Current Events",
+        "Community",
+        "Ideas",
+      ],
       required: true,
     },
-    author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    author: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    approved: {
+      type: Boolean,
+      default: false,
+    },
     reportCount: { type: Number, default: 0 },
     replyCount: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 postSchema.index({ title: "text", content: "text" });

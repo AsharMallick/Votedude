@@ -25,7 +25,7 @@ exports.getPosts = catchAsyncError(async (req, res, next) => {
 exports.getPostById = catchAsyncError(async (req, res, next) => {
   const post = await Post.findById(req.params.id).populate(
     "author",
-    "name photo"
+    "name photo",
   );
   if (!post) return next(new ErrorHandler("Post not found", 404));
 
@@ -40,7 +40,9 @@ exports.createPost = catchAsyncError(async (req, res, next) => {
   const { title, content, category } = req.body;
 
   if (!title || !content || !category) {
-    return next(new ErrorHandler("Title, content and category are required", 400));
+    return next(
+      new ErrorHandler("Title, content and category are required", 400),
+    );
   }
 
   const post = await Post.create({
@@ -80,7 +82,7 @@ exports.toggleLike = catchAsyncError(async (req, res, next) => {
   if (!post) return next(new ErrorHandler("Post not found", 404));
 
   const alreadyLiked = post.likes.some(
-    (id) => String(id) === String(req.user._id)
+    (id) => String(id) === String(req.user._id),
   );
 
   if (alreadyLiked) {
@@ -97,7 +99,7 @@ exports.reportPost = catchAsyncError(async (req, res, next) => {
   const post = await Post.findByIdAndUpdate(
     req.params.id,
     { $inc: { reportCount: 1 } },
-    { new: true }
+    { new: true },
   );
   if (!post) return next(new ErrorHandler("Post not found", 404));
 

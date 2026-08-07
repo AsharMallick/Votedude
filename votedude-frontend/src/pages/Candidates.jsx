@@ -1,15 +1,70 @@
-import React from "react";
+import { useMemo, useState } from "react";
+import { useGetCandidatesQuery } from "../redux/services/candidateApi";
 
-const Candidates = () => {
+const partyBadge = (party = "") => {
+  const p = party.toLowerCase();
+  if (p.includes("republican")) {
+    return "bg-red-50 text-red-700 border-red-100";
+  }
+  if (p.includes("democrat")) {
+    return "bg-blue-50 text-blue-700 border-blue-100";
+  }
+  if (p.includes("independent")) {
+    return "bg-purple-50 text-purple-700 border-purple-100";
+  }
+  return "bg-gray-50 text-gray-700 border-gray-100";
+};
+
+export default function Candidates() {
+  const { data, isLoading, isError, error } = useGetCandidatesQuery();
+  const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
+
+  const all = data?.candidates || [];
+
+  const candidates = useMemo(() => {
+    if (!query.trim()) return all;
+    const q = query.toLowerCase();
+    return all.filter((c) => {
+      const hay = [c.name, c.office, c.city, c.state, c.district, c.party]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [all, query]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setQuery(search.trim());
+  };
+
+  const officeLine = (c) => {
+    const parts = [c.office];
+    if (c.district) parts.push(c.district);
+    return parts.join(" · ");
+  };
+
+  const locationLine = (c) => {
+    return [c.city, c.state].filter(Boolean).join(", ");
+  };
+
+  // stable fake alignment % from id so UI matches design until real matching exists
+  const alignment = (id = "") => {
+    let n = 0;
+    for (let i = 0; i < id.length; i++) n += id.charCodeAt(i);
+    return 55 + (n % 36);
+  };
+
   return (
     <>
-      <div className="bg-[#e1e1e1]  border-[#00000031] border">
+      <div className="bg-[#e1e1e1] border-[#00000031] border">
         <section className="flex justify-start w-[80%] mx-auto pt-14 pb-16 pl-10 px-4 sm:px-6">
           <div className="max-w-3xl">
             <p className="text-[13px] font-medium text-[#5e9c82] tracking-wide uppercase mb-3">
               Find Candidates
             </p>
-            <h1 className="text-[2.5rem] font-extrabold sm:text-[2.75rem]  tracking-tight text-gray-900 leading-tight mb-4">
+            <h1 className="text-[2.5rem] font-extrabold sm:text-[2.75rem] tracking-tight text-gray-900 leading-tight mb-4">
               Know who you're voting for.
             </h1>
             <p className="text-[17px] text-gray-600 max-w-xl mb-8 leading-relaxed">
@@ -17,7 +72,11 @@ const Candidates = () => {
               <br className="hidden sm:block" />
               with what matters to you — no spin.
             </p>
-            <div className="flex flex-col sm:flex-row items-stretch gap-3 max-w-[520px]">
+
+            <form
+              onSubmit={handleSearch}
+              className="flex flex-col sm:flex-row items-stretch gap-3 max-w-[520px]"
+            >
               <div className="relative flex-1">
                 <svg
                   className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-gray-400"
@@ -34,286 +93,124 @@ const Candidates = () => {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Search by name, office, or ZIP"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search by name, office, or city"
                   className="w-full h-[46px] pl-11 pr-4 rounded-full border border-gray-200 bg-white text-[15px] placeholder:text-gray-400 focus:outline-none shadow-sm"
                 />
               </div>
-              <button className="h-[46px] px-7 bg-vd-green hover:bg-vd-green-dark transition text-white text-[15px] font-medium rounded-full shadow-sm whitespace-nowrap">
+              <button
+                type="submit"
+                className="h-[46px] px-7 bg-vd-green hover:bg-vd-green-dark transition text-white text-[15px] font-medium rounded-full shadow-sm whitespace-nowrap"
+              >
                 Search
               </button>
-            </div>
+            </form>
           </div>
         </section>
       </div>
+
       <section className="max-w-[1100px] mx-auto px-4 sm:px-6 py-12">
+        {isLoading && (
+          <p className="text-center text-gray-500 py-20">
+            Loading candidates...
+          </p>
+        )}
+
+        {isError && (
+          <p className="text-center text-red-500 py-20">
+            {error?.data?.message || "Failed to load candidates"}
+          </p>
+        )}
+
+        {!isLoading && !isError && candidates.length === 0 && (
+          <p className="text-center text-gray-500 py-20">
+            No candidates found.
+          </p>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          <article className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-            <div className="p-5 pb-4">
-              <div className="flex gap-3.5">
-                <div className="w-[52px] h-[52px] rounded-xl avatar-placeholder flex-shrink-0"></div>
-                <div className="min-w-0 pt-0.5">
-                  <h3 className="font-semibold text-[15.5px] text-gray-900 leading-tight">
-                    Marcus Halloway
-                  </h3>
-                  <p className="text-[13px] text-gray-500 mt-0.5">
-                    U.S. Senate · Texas
-                  </p>
-                  <span className="inline-block mt-2 px-2.5 py-[3px] text-[11px] font-medium bg-brand-50 text-brand-700 rounded-full border border-brand-100">
-                    Independent
-                  </span>
+          {candidates.map((c) => {
+            const pct = alignment(c._id);
+            const positions = c.positions || [];
+
+            return (
+              <article
+                key={c._id}
+                className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden"
+              >
+                <div className="p-5 pb-4">
+                  <div className="flex gap-3.5">
+                    <div className="w-[52px] h-[52px] rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                      {c.photo ? (
+                        <img
+                          src={c.photo}
+                          alt={c.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-lg font-bold text-gray-400">
+                          {(c.name || "?").charAt(0)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0 pt-0.5">
+                      <h3 className="font-semibold text-[15.5px] text-gray-900 leading-tight">
+                        {c.name}
+                      </h3>
+                      <p className="text-[13px] text-gray-500 mt-0.5">
+                        {officeLine(c)}
+                      </p>
+                      {locationLine(c) && (
+                        <p className="text-[12px] text-gray-400 mt-0.5">
+                          {locationLine(c)}
+                        </p>
+                      )}
+                      {c.party && (
+                        <span
+                          className={`inline-block mt-2 px-2.5 py-[3px] text-[11px] font-medium rounded-full border ${partyBadge(
+                            c.party,
+                          )}`}
+                        >
+                          {c.party}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {positions.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-4">
+                      {positions.slice(0, 4).map((pos) => (
+                        <span
+                          key={pos}
+                          className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100"
+                        >
+                          {pos}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
 
-              <div className="flex flex-wrap gap-1.5 mt-4">
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Fiscal reform
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Veterans
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Energy
-                </span>
-              </div>
-            </div>
-
-            <div className="px-5 pb-5 pt-1">
-              <div className="flex items-center justify-between text-[13px] mb-1.5">
-                <span className="text-gray-500">Aligns with your views</span>
-                <span className="font-semibold text-brand-600">82%</span>
-              </div>
-              <div className="h-[6px] bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-brand-500 rounded-full"
-                  style={{ width: "82%" }}
-                ></div>
-              </div>
-            </div>
-          </article>
-
-          <article className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-            <div className="p-5 pb-4">
-              <div className="flex gap-3.5">
-                <div className="w-[52px] h-[52px] rounded-xl avatar-placeholder flex-shrink-0"></div>
-                <div className="min-w-0 pt-0.5">
-                  <h3 className="font-semibold text-[15.5px] text-gray-900 leading-tight">
-                    David Chen
-                  </h3>
-                  <p className="text-[13px] text-gray-500 mt-0.5">
-                    Governor · Arizona
-                  </p>
-                  <span className="inline-block mt-2 px-2.5 py-[3px] text-[11px] font-medium bg-red-50 text-red-700 rounded-full border border-red-100">
-                    Republican
-                  </span>
+                <div className="px-5 pb-5 pt-1">
+                  <div className="flex items-center justify-between text-[13px] mb-1.5">
+                    <span className="text-gray-500">
+                      Aligns with your views
+                    </span>
+                    <span className="font-semibold text-vd-green">{pct}%</span>
+                  </div>
+                  <div className="h-[6px] bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-vd-green rounded-full"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 mt-4">
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Border
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Small business
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Education
-                </span>
-              </div>
-            </div>
-
-            <div className="px-5 pb-5 pt-1">
-              <div className="flex items-center justify-between text-[13px] mb-1.5">
-                <span className="text-gray-500">Aligns with your views</span>
-                <span className="font-semibold text-brand-600">74%</span>
-              </div>
-              <div className="h-[6px] bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-brand-500 rounded-full"
-                  style={{ width: "74%" }}
-                ></div>
-              </div>
-            </div>
-          </article>
-
-          <article className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-            <div className="p-5 pb-4">
-              <div className="flex gap-3.5">
-                <div className="w-[52px] h-[52px] rounded-xl avatar-placeholder flex-shrink-0"></div>
-                <div className="min-w-0 pt-0.5">
-                  <h3 className="font-semibold text-[15.5px] text-gray-900 leading-tight">
-                    James Whitfield
-                  </h3>
-                  <p className="text-[13px] text-gray-500 mt-0.5">
-                    U.S. House · District 4
-                  </p>
-                  <span className="inline-block mt-2 px-2.5 py-[3px] text-[11px] font-medium bg-blue-50 text-blue-700 rounded-full border border-blue-100">
-                    Democrat
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 mt-4">
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Jobs
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Healthcare
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Infrastructure
-                </span>
-              </div>
-            </div>
-
-            <div className="px-5 pb-5 pt-1">
-              <div className="flex items-center justify-between text-[13px] mb-1.5">
-                <span className="text-gray-500">Aligns with your views</span>
-                <span className="font-semibold text-brand-600">68%</span>
-              </div>
-              <div className="h-[6px] bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-brand-500 rounded-full"
-                  style={{ width: "68%" }}
-                ></div>
-              </div>
-            </div>
-          </article>
-
-          <article className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-            <div className="p-5 pb-4">
-              <div className="flex gap-3.5">
-                <div className="w-[52px] h-[52px] rounded-xl avatar-placeholder flex-shrink-0"></div>
-                <div className="min-w-0 pt-0.5">
-                  <h3 className="font-semibold text-[15.5px] text-gray-900 leading-tight">
-                    Robert Ellis
-                  </h3>
-                  <p className="text-[13px] text-gray-500 mt-0.5">
-                    State Senate · Ohio
-                  </p>
-                  <span className="inline-block mt-2 px-2.5 py-[3px] text-[11px] font-medium bg-brand-50 text-brand-700 rounded-full border border-brand-100">
-                    Independent
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 mt-4">
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  2nd Amendment
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Taxes
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Manufacturing
-                </span>
-              </div>
-            </div>
-
-            <div className="px-5 pb-5 pt-1">
-              <div className="flex items-center justify-between text-[13px] mb-1.5">
-                <span className="text-gray-500">Aligns with your views</span>
-                <span className="font-semibold text-brand-600">79%</span>
-              </div>
-              <div className="h-[6px] bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-brand-500 rounded-full"
-                  style={{ width: "79%" }}
-                ></div>
-              </div>
-            </div>
-          </article>
-
-          <article className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-            <div className="p-5 pb-4">
-              <div className="flex gap-3.5">
-                <div className="w-[52px] h-[52px] rounded-xl avatar-placeholder flex-shrink-0"></div>
-                <div className="min-w-0 pt-0.5">
-                  <h3 className="font-semibold text-[15.5px] text-gray-900 leading-tight">
-                    Tony Alvarez
-                  </h3>
-                  <p className="text-[13px] text-gray-500 mt-0.5">
-                    Mayor · Phoenix, AZ
-                  </p>
-                  <span className="inline-block mt-2 px-2.5 py-[3px] text-[11px] font-medium bg-purple-50 text-purple-700 rounded-full border border-purple-100">
-                    Nonpartisan
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 mt-4">
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Public safety
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Housing
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Water
-                </span>
-              </div>
-            </div>
-
-            <div className="px-5 pb-5 pt-1">
-              <div className="flex items-center justify-between text-[13px] mb-1.5">
-                <span className="text-gray-500">Aligns with your views</span>
-                <span className="font-semibold text-brand-600">71%</span>
-              </div>
-              <div className="h-[6px] bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-brand-500 rounded-full"
-                  style={{ width: "71%" }}
-                ></div>
-              </div>
-            </div>
-          </article>
-
-          <article className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-            <div className="p-5 pb-4">
-              <div className="flex gap-3.5">
-                <div className="w-[52px] h-[52px] rounded-xl avatar-placeholder flex-shrink-0"></div>
-                <div className="min-w-0 pt-0.5">
-                  <h3 className="font-semibold text-[15.5px] text-gray-900 leading-tight">
-                    Frank DiMarco
-                  </h3>
-                  <p className="text-[13px] text-gray-500 mt-0.5">
-                    U.S. House · District 12
-                  </p>
-                  <span className="inline-block mt-2 px-2.5 py-[3px] text-[11px] font-medium bg-red-50 text-red-700 rounded-full border border-red-100">
-                    Republican
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 mt-4">
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Trade
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Immigration
-                </span>
-                <span className="px-2.5 py-1 text-[12px] text-gray-600 bg-gray-50 rounded-lg border border-gray-100">
-                  Defense
-                </span>
-              </div>
-            </div>
-
-            <div className="px-5 pb-5 pt-1">
-              <div className="flex items-center justify-between text-[13px] mb-1.5">
-                <span className="text-gray-500">Aligns with your views</span>
-                <span className="font-semibold text-brand-600">65%</span>
-              </div>
-              <div className="h-[6px] bg-gray-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-brand-500 rounded-full"
-                  style={{ width: "65%" }}
-                ></div>
-              </div>
-            </div>
-          </article>
+              </article>
+            );
+          })}
         </div>
       </section>
     </>
   );
-};
-
-export default Candidates;
+}

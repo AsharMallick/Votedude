@@ -9,7 +9,18 @@ export const api = createApi({
     credentials: "include",
   }),
 
-  tagTypes: ["User", "News", "Event", "Sport", "Poll", "Petition", "Candidate"],
+  tagTypes: [
+    "User",
+    "News",
+    "Event",
+    "Sport",
+    "Poll",
+    "Petition",
+    "Candidate",
+    "Discuss",
+    "Issue",
+    "Law",
+  ],
 
   endpoints: () => ({}),
 });

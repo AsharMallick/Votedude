@@ -1,60 +1,41 @@
-import React from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import {
+  useGetPetitionsQuery,
+  useSignPetitionMutation,
+} from "../redux/services/petitionApi";
 
-const petitions = [
-  {
-    category: "ECONOMY",
-    title: "Protect the American Dream: Lower Taxes for Working Families",
-    signed: 18732,
-    goal: 25000,
-    image:
-      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=600&h=300&fit=crop",
-  },
-  {
-    category: "VETERANS",
-    title: "Fully Fund Veteran Mental Health Programs",
-    signed: 22140,
-    goal: 25000,
-    image:
-      "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=600&h=300&fit=crop",
-  },
-  {
-    category: "REFORM",
-    title: "Term Limits for Congress",
-    signed: 41890,
-    goal: 50000,
-    image:
-      "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=600&h=300&fit=crop",
-  },
-  {
-    category: "SECURITY",
-    title: "Secure the Border, Support Legal Immigration",
-    signed: 15320,
-    goal: 30000,
-    image:
-      "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=600&h=300&fit=crop",
-  },
-  {
-    category: "ECONOMY",
-    title: "Cut Wasteful Federal Spending",
-    signed: 9870,
-    goal: 20000,
-    image:
-      "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=600&h=300&fit=crop",
-  },
-  {
-    category: "RIGHTS",
-    title: "Protect 2nd Amendment Rights",
-    signed: 33450,
-    goal: 40000,
-    image:
-      "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&h=300&fit=crop",
-  },
-];
+export default function Petitions() {
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
 
-const Petitions = () => {
+  const { data, isLoading, isError, error } = useGetPetitionsQuery();
+  const [signPetition, { isLoading: signing }] = useSignPetitionMutation();
+
+  const petitions = data?.petitions || [];
+
+  const handleSign = async (id) => {
+    if (!user) {
+      navigate("/auth", { state: { login: true } });
+      return;
+    }
+    try {
+      await signPetition(id).unwrap();
+    } catch (err) {
+      alert(err?.data?.message || "Could not sign petition");
+    }
+  };
+
+  const hasSigned = (p) => {
+    if (!user || !p.signedUsers) return false;
+    return p.signedUsers.some(
+      (id) =>
+        String(id) === String(user._id) || String(id?._id) === String(user._id),
+    );
+  };
+
   return (
     <div>
-      {/* Hero */}
       <div className="bg-[#e1e1e1] border border-[#00000031]">
         <section className="flex flex-col justify-start w-[80%] mx-auto pt-14 pb-16 pl-10 px-4 sm:px-6">
           <div>
@@ -69,7 +50,7 @@ const Petitions = () => {
                 Petitions turn frustration into pressure. Sign the ones that
                 matter — or start your own.
               </p>
-              <button className="h-[44px] px-5 bg-black hover:bg-black/80 text-white text-[14px] font-medium rounded-md transition-colors shadow-sm whitespace-nowrap flex items-center gap-1.5">
+              <button className="h-[44px] px-5 bg-black hover:bg-black/80 text-white text-[14px] font-medium rounded-md transition-colors whitespace-nowrap flex items-center gap-1.5">
                 <span className="text-lg leading-none">+</span>
                 Start a Petition
               </button>
@@ -78,62 +59,67 @@ const Petitions = () => {
         </section>
       </div>
 
-      {/* Petitions Grid */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
+        {isLoading && (
+          <p className="text-center text-gray-500 py-20">
+            Loading petitions...
+          </p>
+        )}
+        {isError && (
+          <p className="text-center text-red-500 py-20">
+            {error?.data?.message || "Failed to load petitions"}
+          </p>
+        )}
+        {!isLoading && petitions.length === 0 && (
+          <p className="text-center text-gray-500 py-20">No petitions yet.</p>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {petitions.map((p, i) => {
-            const percent = Math.min(
-              Math.round((p.signed / p.goal) * 100),
-              100,
-            );
+          {petitions.map((p) => {
+            const signed = p.signedUsers?.length || p.signatureCount || 0;
+            const goal = p.goal || 1;
+            const percent = Math.min(Math.round((signed / goal) * 100), 100);
+            const alreadySigned = hasSigned(p);
 
             return (
               <article
-                key={i}
-                className="bg-white border border-[#00000031] rounded-2xl overflow-hidden hover:shadow-md transition-shadow"
+                key={p._id}
+                className="bg-white border border-[#00000031] rounded-2xl p-5 hover:shadow-md transition-shadow"
               >
-                {/* Image header */}
-                <div className="relative h-32">
-                  <img
-                    src={p.image}
-                    alt={p.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/25" />
+                {p.category && (
+                  <span className="inline-block text-[11px] font-extrabold text-vd-green tracking-wide uppercase mb-3">
+                    {p.category}
+                  </span>
+                )}
+                <h3 className="font-semibold text-[16px] text-gray-900 leading-snug mb-4">
+                  {p.title}
+                </h3>
 
-                  {/* Category pill */}
-                  <div className="absolute top-3 left-3">
-                    <span className="bg-white text-vd-green-dark text-[11px] font-extrabold tracking-wide uppercase px-3 py-1 rounded-full">
-                      {p.category}
-                    </span>
+                <div className="mb-3">
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-vd-green rounded-full"
+                      style={{ width: `${percent}%` }}
+                    />
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-5">
-                  <h3 className="font-semibold text-[16px] text-gray-900 leading-snug mb-4">
-                    {p.title}
-                  </h3>
-
-                  {/* Progress bar */}
-                  <div className="mb-3">
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-vd-green rounded-full"
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Count + Sign button */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-[13px] text-gray-500">
-                      {p.signed.toLocaleString()} of {p.goal.toLocaleString()}
-                    </span>
-                    <button className="h-9 px-5 bg-vd-green hover:bg-vd-green-dark text-white text-[13px] font-medium rounded-md transition-colors">
-                      Sign
-                    </button>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-gray-500">
+                    {Number(signed).toLocaleString()} of{" "}
+                    {Number(goal).toLocaleString()}
+                  </span>
+                  <button
+                    onClick={() => handleSign(p._id)}
+                    disabled={signing || alreadySigned}
+                    className={`h-9 px-5 text-[13px] font-medium rounded-md transition-colors ${
+                      alreadySigned
+                        ? "bg-gray-100 text-gray-500 cursor-default"
+                        : "bg-vd-green hover:bg-vd-green-dark text-white"
+                    }`}
+                  >
+                    {alreadySigned ? "Signed ✓" : "Sign"}
+                  </button>
                 </div>
               </article>
             );
@@ -142,6 +128,4 @@ const Petitions = () => {
       </section>
     </div>
   );
-};
-
-export default Petitions;
+}
