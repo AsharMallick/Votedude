@@ -6,10 +6,15 @@ const schema = new mongoose.Schema(
     description: { type: String, required: true },
     category: { type: String, default: "" },
     goal: { type: Number, required: true },
+    status: {
+      type: String,
+      enum: ["approved", "pending"],
+      default: "pending",
+    },
     signedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 schema.virtual("signatureCount").get(function () {

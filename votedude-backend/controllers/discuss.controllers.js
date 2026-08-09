@@ -5,7 +5,7 @@ const { awardPoints } = require("../utils/gamification");
 
 exports.getPosts = catchAsyncError(async (req, res, next) => {
   const { search, category } = req.body || {};
-  const filter = {};
+  const filter = { status: "approved" };
 
   if (category) filter.category = category;
   if (search) {

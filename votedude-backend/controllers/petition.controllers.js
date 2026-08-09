@@ -4,7 +4,7 @@ const ErrorHandler = require("../utils/errorHandler");
 
 exports.getPetitions = catchAsyncError(async (req, res, next) => {
   const { search, category } = req.body || {};
-  const filter = {};
+  const filter = { status: "approved" };
 
   if (category) filter.category = category;
   if (search) {
@@ -24,7 +24,7 @@ exports.getPetitions = catchAsyncError(async (req, res, next) => {
 exports.getPetitionById = catchAsyncError(async (req, res, next) => {
   const petition = await Petition.findById(req.params.id).populate(
     "createdBy",
-    "name photo"
+    "name photo",
   );
   if (!petition) return next(new ErrorHandler("Petition not found", 404));
 
@@ -36,7 +36,7 @@ exports.createPetition = catchAsyncError(async (req, res, next) => {
 
   if (!title || !description || !goal) {
     return next(
-      new ErrorHandler("Title, description and goal are required", 400)
+      new ErrorHandler("Title, description and goal are required", 400),
     );
   }
 
@@ -57,7 +57,7 @@ exports.signPetition = catchAsyncError(async (req, res, next) => {
   if (!petition) return next(new ErrorHandler("Petition not found", 404));
 
   const alreadySigned = petition.signedUsers.some(
-    (id) => String(id) === String(req.user._id)
+    (id) => String(id) === String(req.user._id),
   );
 
   if (alreadySigned) {

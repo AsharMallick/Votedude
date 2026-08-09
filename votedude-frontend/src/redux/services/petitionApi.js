@@ -7,6 +7,20 @@ export const petitionApi = api.injectEndpoints({
       providesTags: ["Petition"],
     }),
 
+    getPetitionById: builder.query({
+      query: (id) => `/petitions/${id}`,
+      providesTags: (result, error, id) => [{ type: "Petition", id }],
+    }),
+
+    createPetition: builder.mutation({
+      query: (body) => ({
+        url: "/petitions",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Petition"],
+    }),
+
     signPetition: builder.mutation({
       query: (id) => ({
         url: `/petitions/${id}/sign`,
@@ -17,4 +31,9 @@ export const petitionApi = api.injectEndpoints({
   }),
 });
 
-export const { useGetPetitionsQuery, useSignPetitionMutation } = petitionApi;
+export const {
+  useGetPetitionsQuery,
+  useGetPetitionByIdQuery,
+  useCreatePetitionMutation,
+  useSignPetitionMutation,
+} = petitionApi;

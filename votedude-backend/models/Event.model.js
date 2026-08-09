@@ -6,7 +6,14 @@ const schema = new mongoose.Schema(
     description: { type: String, required: true },
     category: {
       type: String,
-      enum: ["Community", "Political", "Volunteer", "Fundraiser", "Networking", "Sports"],
+      enum: [
+        "Community",
+        "Political",
+        "Volunteer",
+        "Fundraiser",
+        "Networking",
+        "Sports",
+      ],
       required: true,
     },
     date: { type: Date, required: true },
@@ -14,7 +21,11 @@ const schema = new mongoose.Schema(
     lat: Number,
     lng: Number,
     image: { type: String, default: "" },
-    organizer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    organizer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     status: { type: String, enum: ["pending", "approved"], default: "pending" },
     rsvpList: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     comments: [
@@ -25,7 +36,7 @@ const schema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 schema.index({ title: "text", location: "text" });

@@ -1,9 +1,20 @@
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
   useGetPetitionsQuery,
   useSignPetitionMutation,
+  useCreatePetitionMutation,
 } from "../redux/services/petitionApi";
+
+const CATEGORIES = [
+  "ECONOMY",
+  "VETERANS",
+  "REFORM",
+  "SECURITY",
+  "RIGHTS",
+  "COMMUNITY",
+];
 
 export default function Petitions() {
   const navigate = useNavigate();
@@ -11,8 +22,45 @@ export default function Petitions() {
 
   const { data, isLoading, isError, error } = useGetPetitionsQuery();
   const [signPetition, { isLoading: signing }] = useSignPetitionMutation();
+  const [createPetition, { isLoading: creating }] = useCreatePetitionMutation();
 
   const petitions = data?.petitions || [];
+
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [goal, setGoal] = useState("1000");
+
+  const openForm = () => {
+    if (!user) {
+      navigate("/auth", { state: { login: true } });
+      return;
+    }
+    setShowForm(true);
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!title.trim() || !description.trim() || !goal) return;
+
+    try {
+      await createPetition({
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        goal: Number(goal),
+      }).unwrap();
+
+      setTitle("");
+      setDescription("");
+      setCategory(CATEGORIES[0]);
+      setGoal("1000");
+      setShowForm(false);
+    } catch (err) {
+      alert(err?.data?.message || "Could not create petition");
+    }
+  };
 
   const handleSign = async (id) => {
     if (!user) {
@@ -50,7 +98,10 @@ export default function Petitions() {
                 Petitions turn frustration into pressure. Sign the ones that
                 matter — or start your own.
               </p>
-              <button className="h-[44px] px-5 bg-black hover:bg-black/80 text-white text-[14px] font-medium rounded-md transition-colors whitespace-nowrap flex items-center gap-1.5">
+              <button
+                onClick={openForm}
+                className="h-[44px] px-5 bg-black hover:bg-black/80 text-white text-[14px] font-medium rounded-md transition-colors whitespace-nowrap flex items-center gap-1.5"
+              >
                 <span className="text-lg leading-none">+</span>
                 Start a Petition
               </button>
@@ -58,6 +109,72 @@ export default function Petitions() {
           </div>
         </section>
       </div>
+
+      {/* Start a Petition form */}
+      {showForm && (
+        <section className="max-w-3xl mx-auto px-4 sm:px-6 pt-8">
+          <form
+            onSubmit={handleCreate}
+            className="bg-white border border-[#00000031] rounded-2xl p-6 space-y-4"
+          >
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Petition title"
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30"
+              required
+            />
+
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe what you're asking for"
+              rows={4}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30 resize-none"
+              required
+            />
+
+            <input
+              type="number"
+              min="1"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              placeholder="Signature goal"
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30"
+              required
+            />
+
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="h-10 px-4 text-[14px] text-gray-600 hover:text-gray-900"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creating}
+                className="h-10 px-5 bg-vd-green hover:bg-vd-green-dark text-white text-[14px] font-medium rounded-md"
+              >
+                {creating ? "Submitting..." : "Submit Petition"}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
         {isLoading && (
@@ -77,8 +194,11 @@ export default function Petitions() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {petitions.map((p) => {
             const signed = p.signedUsers?.length || p.signatureCount || 0;
-            const goal = p.goal || 1;
-            const percent = Math.min(Math.round((signed / goal) * 100), 100);
+            const goalCount = p.goal || 1;
+            const percent = Math.min(
+              Math.round((signed / goalCount) * 100),
+              100,
+            );
             const alreadySigned = hasSigned(p);
 
             return (
@@ -107,7 +227,7 @@ export default function Petitions() {
                 <div className="flex items-center justify-between">
                   <span className="text-[13px] text-gray-500">
                     {Number(signed).toLocaleString()} of{" "}
-                    {Number(goal).toLocaleString()}
+                    {Number(goalCount).toLocaleString()}
                   </span>
                   <button
                     onClick={() => handleSign(p._id)}

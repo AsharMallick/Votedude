@@ -153,49 +153,46 @@ export default function Discuss() {
         )}
 
         <div className="space-y-3">
-          {posts.map(
-            (d) =>
-              d.approved && (
-                <article
-                  key={d._id}
-                  className="bg-white border border-[#00000031] rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-sm transition-shadow"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-[15.5px] text-gray-900 leading-snug">
-                        {d.title}
-                      </h3>
-                    </div>
-                    <p className="text-[13px] text-gray-500">
-                      Started by{" "}
-                      {(d.author?.firstname &&
-                        d.author?.firstName + d.author?.lastName) ||
-                        d.author?.name ||
-                        "Member"}{" "}
-                      ·{" "}
-                      <span className="text-vd-green font-medium">
-                        {d.category}
-                      </span>
-                    </p>
-                  </div>
+          {posts.map((d) => (
+            <article
+              key={d._id}
+              className="bg-white border border-[#00000031] rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-sm transition-shadow"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-[15.5px] text-gray-900 leading-snug">
+                    {d.title}
+                  </h3>
+                </div>
+                <p className="text-[13px] text-gray-500">
+                  Started by{" "}
+                  {(d.author?.firstname &&
+                    d.author?.firstName + d.author?.lastName) ||
+                    d.author?.name ||
+                    "Member"}{" "}
+                  ·{" "}
+                  <span className="text-vd-green font-medium">
+                    {d.category}
+                  </span>
+                </p>
+              </div>
 
-                  <div className="flex items-center gap-4 sm:gap-5 flex-shrink-0">
-                    <div className="text-right flex items-center flex-col">
-                      <div className="text-[15px] font-semibold text-gray-800">
-                        {d.replyCount || 0}
-                      </div>
-                      <div className="text-[11px] text-gray-400">replies</div>
-                    </div>
-                    <div className="text-right flex items-center flex-col">
-                      <div className="text-[15px] font-semibold text-gray-800">
-                        {d.likes?.length || 0}
-                      </div>
-                      <div className="text-[11px] text-gray-400">likes</div>
-                    </div>
+              <div className="flex items-center gap-4 sm:gap-5 flex-shrink-0">
+                <div className="text-right flex items-center flex-col">
+                  <div className="text-[15px] font-semibold text-gray-800">
+                    {d.replyCount || 0}
                   </div>
-                </article>
-              ),
-          )}
+                  <div className="text-[11px] text-gray-400">replies</div>
+                </div>
+                <div className="text-right flex items-center flex-col">
+                  <div className="text-[15px] font-semibold text-gray-800">
+                    {d.likes?.length || 0}
+                  </div>
+                  <div className="text-[11px] text-gray-400">likes</div>
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
     </div>

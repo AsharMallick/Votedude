@@ -1,9 +1,20 @@
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
   useGetEventsQuery,
   useRsvpEventMutation,
+  useCreateEventMutation,
 } from "../redux/services/eventApi";
+
+const CATEGORIES = [
+  "Community",
+  "Political",
+  "Volunteer",
+  "Fundraiser",
+  "Networking",
+  "Sports",
+];
 
 export default function Events() {
   const navigate = useNavigate();
@@ -11,8 +22,53 @@ export default function Events() {
 
   const { data, isLoading, isError, error } = useGetEventsQuery();
   const [rsvpEvent, { isLoading: rsvpLoading }] = useRsvpEventMutation();
+  const [createEvent, { isLoading: creating }] = useCreateEventMutation();
 
   const events = data?.events || [];
+
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [date, setDate] = useState("");
+  const [location, setLocation] = useState("");
+  const [image, setImage] = useState("");
+
+  const openForm = () => {
+    if (!user) {
+      navigate("/auth", { state: { login: true } });
+      return;
+    }
+    setShowForm(true);
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!title.trim() || !description.trim() || !date || !location.trim()) {
+      return;
+    }
+
+    try {
+      await createEvent({
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        date,
+        location: location.trim(),
+        image: image.trim() || "",
+      }).unwrap();
+
+      setTitle("");
+      setDescription("");
+      setCategory(CATEGORIES[0]);
+      setDate("");
+      setLocation("");
+      setImage("");
+      setShowForm(false);
+    } catch (err) {
+      alert(err?.data?.message || "Could not create event");
+    }
+  };
 
   const handleRsvp = async (eventId) => {
     if (!user) {
@@ -67,7 +123,10 @@ export default function Events() {
                 Town halls, rallies, registration drives, and community events
                 near you.
               </p>
-              <button className="h-[44px] px-5 bg-black hover:bg-black/80 text-white text-[14px] font-medium rounded-md transition-colors shadow-sm whitespace-nowrap flex items-center gap-1.5">
+              <button
+                onClick={openForm}
+                className="h-[44px] px-5 bg-black hover:bg-black/80 text-white text-[14px] font-medium rounded-md transition-colors shadow-sm whitespace-nowrap flex items-center gap-1.5"
+              >
                 <span className="text-lg leading-none">+</span>
                 Host an Event
               </button>
@@ -75,6 +134,85 @@ export default function Events() {
           </div>
         </section>
       </div>
+
+      {/* Host an Event form */}
+      {showForm && (
+        <section className="max-w-3xl mx-auto px-4 sm:px-6 pt-8">
+          <form
+            onSubmit={handleCreate}
+            className="bg-white border border-[#00000031] rounded-2xl p-6 space-y-4"
+          >
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Event title"
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30"
+              required
+            />
+
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Event description"
+              rows={4}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30 resize-none"
+              required
+            />
+
+            <input
+              type="datetime-local"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30"
+              required
+            />
+
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Location"
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30"
+              required
+            />
+
+            <input
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+              placeholder="Image URL (optional)"
+              className="w-full h-11 px-4 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30"
+            />
+
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="h-10 px-4 text-[14px] text-gray-600 hover:text-gray-900"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creating}
+                className="h-10 px-5 bg-vd-green hover:bg-vd-green-dark text-white text-[14px] font-medium rounded-md"
+              >
+                {creating ? "Submitting..." : "Submit Event"}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
 
       {/* Grid */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
