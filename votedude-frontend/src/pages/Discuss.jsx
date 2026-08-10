@@ -156,7 +156,10 @@ export default function Discuss() {
           {posts.map((d) => (
             <article
               key={d._id}
-              className="bg-white border border-[#00000031] rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-sm transition-shadow"
+              onClick={() => {
+                navigate(d._id);
+              }}
+              className="bg-white border cursor-pointer border-[#00000031] rounded-2xl px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-sm transition-shadow"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">

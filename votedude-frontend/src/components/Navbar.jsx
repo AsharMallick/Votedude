@@ -14,6 +14,8 @@ const navLinks = [
   { name: "News", path: "/news" },
   { name: "Discuss", path: "/discuss" },
   { name: "Events", path: "/events" },
+  { name: "Sports", path: "/sports" },
+  { name: "Polls", path: "/polls" },
 ];
 
 export default function Navbar() {
@@ -21,8 +23,6 @@ export default function Navbar() {
   const dispatch = useDispatch();
 
   const user = useSelector((state) => state.auth.user);
-
-  // isLoading / isFetching = still checking cookie via /me
   const { isLoading, isFetching } = useGetMeQuery();
   const checkingAuth = isLoading || isFetching;
 
@@ -31,15 +31,13 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await logoutApi().unwrap();
-    } catch (_) {
-      // ignore network errors on logout
-    }
+    } catch (_) {}
     dispatch(logoutAction());
   };
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-black/5">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link
           to="/"
           className="flex items-center gap-2 font-display font-black text-lg tracking-tight"
@@ -47,38 +45,40 @@ export default function Navbar() {
           <img src="/logo-white.png" alt="Logo" className="w-[25vh]" />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-vd-black/80">
+        <nav className="hidden xl:flex items-center gap-4 text-sm font-medium text-vd-black/80">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.path}
-              className="hover:text-vd-green transition-colors"
+              className="hover:text-vd-green transition-colors whitespace-nowrap"
             >
               {link.name}
             </Link>
           ))}
         </nav>
 
-        {/* Desktop auth buttons */}
-        <div className="hidden lg:flex items-center gap-4 min-w-[140px] justify-end">
+        <div className="hidden lg:flex items-center gap-3 min-w-[160px] justify-end">
           {checkingAuth ? (
-            // optional: small placeholder so layout doesn't jump
             <div className="h-9 w-20 rounded-md bg-gray-100 animate-pulse" />
           ) : user ? (
             <>
+              {user.role === "admin" && (
+                <Link
+                  to="/admin"
+                  className="text-sm font-semibold text-vd-green"
+                >
+                  Admin
+                </Link>
+              )}
+              <Link to="/profile" className="text-sm font-semibold">
+                {user.name?.split(" ")[0] || "Profile"}
+              </Link>
               <button
-                onClick={() => {
-                  handleLogout();
-                }}
-                className="bg-vd-green hover:bg-vd-green-dark transition-colors text-white text-sm font-bold px-5 py-2.5 rounded-md cursor-pointer"
+                onClick={handleLogout}
+                className="text-sm font-semibold cursor-pointer"
               >
                 Logout
               </button>
-              {user.firstName && user.lastName ? (
-                <div>Hi, {user.firstName + " " + user.lastName}</div>
-              ) : (
-                <div>Hi, {user.name}</div>
-              )}
             </>
           ) : (
             <>
@@ -114,29 +114,37 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-
-          {!checkingAuth &&
-            (user ? (
+          {user ? (
+            <>
+              <Link to="/profile" onClick={() => setOpen(false)}>
+                Profile
+              </Link>
+              {user.role === "admin" && (
+                <Link to="/admin" onClick={() => setOpen(false)}>
+                  Admin
+                </Link>
+              )}
               <button
                 onClick={() => {
                   setOpen(false);
                   handleLogout();
                 }}
-                className="bg-vd-green hover:bg-vd-green-dark transition-colors text-white text-sm font-bold px-5 py-2.5 rounded-md cursor-pointer"
+                className="text-left font-semibold"
               >
                 Logout
               </button>
-            ) : (
-              <Link
-                to="/auth"
-                state={{ login: false }}
-                onClick={() => setOpen(false)}
-              >
-                <button className="bg-vd-green text-white font-bold px-5 py-2.5 rounded-md mt-2">
-                  JOIN NOW
-                </button>
-              </Link>
-            ))}
+            </>
+          ) : (
+            <Link
+              to="/auth"
+              state={{ login: false }}
+              onClick={() => setOpen(false)}
+            >
+              <button className="bg-vd-green text-white font-bold px-5 py-2.5 rounded-md mt-2">
+                JOIN NOW
+              </button>
+            </Link>
+          )}
         </nav>
       )}
     </header>

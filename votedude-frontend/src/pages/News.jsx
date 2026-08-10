@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useGetNewsQuery } from "../redux/services/newsApi";
 
 export default function News() {
@@ -81,9 +82,11 @@ export default function News() {
                 <p className="text-[14px] text-gray-600 leading-relaxed mb-4 line-clamp-3 flex-1">
                   {featured.content}
                 </p>
-                <button className="self-start text-[13px] font-medium text-vd-green hover:text-vd-green-dark transition-colors">
-                  Read full story →
-                </button>
+                <Link to={featured._id}>
+                  <button className="cursor-pointer self-start text-[13px] font-medium text-vd-green hover:text-vd-green-dark transition-colors">
+                    Read full story →
+                  </button>
+                </Link>
               </div>
             </article>
 
@@ -120,9 +123,11 @@ export default function News() {
                           ? new Date(item.createdAt).toLocaleDateString()
                           : ""}
                       </span>
-                      <button className="text-[12px] font-medium text-vd-green hover:text-vd-green-dark whitespace-nowrap">
-                        Read more →
-                      </button>
+                      <Link to={item._id}>
+                        <button className="cursor-pointer text-[12px] font-medium text-vd-green hover:text-vd-green-dark whitespace-nowrap">
+                          Read more →
+                        </button>
+                      </Link>
                     </div>
                   </div>
                 </article>

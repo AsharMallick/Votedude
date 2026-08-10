@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   useGoogleLoginMutation,
@@ -15,6 +15,11 @@ export default function Auth() {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const authUser = useSelector((state) => state.auth.isAuthenticated);
+
+  useEffect(() => {
+    if (authUser) navigate("/profile");
+  }, [authUser]);
 
   const [isLogin, setIsLogin] = useState(location.state?.login ?? true);
 
