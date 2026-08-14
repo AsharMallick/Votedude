@@ -1,6 +1,7 @@
 const News = require("../models/News.model");
 const { catchAsyncError } = require("../middlewares/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandler");
+const { createLinkedDiscussion } = require("../utils/createLinkedDiscussion");
 
 exports.getNews = catchAsyncError(async (req, res, next) => {
   const { search, category } = req.body || {};
@@ -27,7 +28,7 @@ exports.getNews = catchAsyncError(async (req, res, next) => {
 exports.getNewsById = catchAsyncError(async (req, res, next) => {
   const article = await News.findById(req.params.id).populate(
     "author",
-    "name photo"
+    "name photo",
   );
   if (!article) return next(new ErrorHandler("Article not found", 404));
 
@@ -41,7 +42,9 @@ exports.createNews = catchAsyncError(async (req, res, next) => {
   const { title, content, category, image } = req.body;
 
   if (!title || !content || !category) {
-    return next(new ErrorHandler("Title, content and category are required", 400));
+    return next(
+      new ErrorHandler("Title, content and category are required", 400),
+    );
   }
 
   const article = await News.create({
@@ -52,6 +55,17 @@ exports.createNews = catchAsyncError(async (req, res, next) => {
     author: req.user._id,
     status: "approved",
   });
+
+  const post = await createLinkedDiscussion({
+    title: news.title,
+    content: news.content?.slice(0, 500),
+    authorId: req.user._id,
+    related: { relatedNews: news._id },
+    type: "News",
+  });
+
+  article.discussionPost = post._id;
+  await article.save();
 
   res.status(201).json({
     success: true,
@@ -64,7 +78,7 @@ exports.toggleLike = catchAsyncError(async (req, res, next) => {
   if (!article) return next(new ErrorHandler("Article not found", 404));
 
   const alreadyLiked = article.likes.some(
-    (id) => String(id) === String(req.user._id)
+    (id) => String(id) === String(req.user._id),
   );
 
   if (alreadyLiked) {
@@ -94,4 +108,26 @@ exports.addComment = catchAsyncError(async (req, res, next) => {
     success: true,
     comments: article.comments,
   });
+});
+
+exports.ensureNewsDiscussion = catchAsyncError(async (req, res, next) => {
+  const news = await News.findById(req.params.id);
+  if (!news) return next(new ErrorHandler("Article not found", 404));
+
+  if (news.discussionPost) {
+    return res.status(200).json({ success: true, postId: news.discussionPost });
+  }
+
+  const post = await createLinkedDiscussion({
+    title: news.title,
+    content: news.content?.slice(0, 500),
+    authorId: req.user._id,
+    related: { relatedNews: news._id },
+    type: "News",
+  });
+
+  news.discussionPost = post._id;
+  await news.save();
+
+  res.status(200).json({ success: true, postId: post._id });
 });

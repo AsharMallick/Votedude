@@ -11,7 +11,11 @@ const schema = new mongoose.Schema(
     },
     image: { type: String, default: "" },
     author: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    status: { type: String, enum: ["pending", "approved"], default: "approved" },
+    status: {
+      type: String,
+      enum: ["pending", "approved"],
+      default: "approved",
+    },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     comments: [
       {
@@ -20,8 +24,13 @@ const schema = new mongoose.Schema(
         createdAt: { type: Date, default: Date.now },
       },
     ],
+    discussionPost: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+      default: null,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 schema.index({ title: "text", content: "text" });

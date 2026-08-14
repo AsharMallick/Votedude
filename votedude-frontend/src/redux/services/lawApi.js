@@ -20,8 +20,18 @@ export const lawApi = api.injectEndpoints({
       query: (id) => `/laws/${id}`,
       providesTags: (result, error, id) => [{ type: "Law", id }],
     }),
+    ensureLawDiscussion: builder.mutation({
+      query: (id) => ({
+        url: `/laws/${id}/ensure-discussion`,
+        method: "POST",
+      }),
+    }),
   }),
 });
 
-export const { useGetLawsQuery, useSearchLawsMutation, useGetLawByIdQuery } =
-  lawApi;
+export const {
+  useGetLawsQuery,
+  useSearchLawsMutation,
+  useGetLawByIdQuery,
+  useEnsureLawDiscussionMutation,
+} = lawApi;

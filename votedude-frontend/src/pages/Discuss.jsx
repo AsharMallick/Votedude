@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   useGetPostsQuery,
   useCreatePostMutation,
@@ -163,9 +163,11 @@ export default function Discuss() {
             >
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-[15.5px] text-gray-900 leading-snug">
-                    {d.title}
-                  </h3>
+                  <Link to={`/discuss/${d._id}`}>
+                    <h3 className="font-semibold text-[15.5px] text-gray-900 leading-snug hover:text-vd-green">
+                      {d.title}
+                    </h3>
+                  </Link>
                 </div>
                 <p className="text-[13px] text-gray-500">
                   Started by{" "}

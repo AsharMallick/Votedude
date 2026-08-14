@@ -8,12 +8,25 @@ const schema = new mongoose.Schema(
     summary: { type: String, required: true },
     status: {
       type: String,
-      enum: ["Introduced", "In Committee", "Floor Vote", "Passed House", "Passed Senate", "Signed"],
+      enum: [
+        "Introduced",
+        "In Committee",
+        "Floor Vote",
+        "Passed House",
+        "Passed Senate",
+        "Signed",
+      ],
       default: "Introduced",
+    },
+    discussionPost: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+      default: null,
     },
     supportPercent: { type: Number, default: 0 },
   },
-  { timestamps: true }
+
+  { timestamps: true },
 );
 
 schema.index({ title: "text", billNumber: "text" });

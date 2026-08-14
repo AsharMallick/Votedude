@@ -194,9 +194,11 @@ function IssueCard({ issue, formatFollowers, trendStyle }) {
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="font-semibold text-[18px] text-gray-900 leading-tight">
-              {issue.title}
-            </h2>
+            <Link to={`/news/${issue._id}`}>
+              <h2 className="font-semibold text-[18px] text-gray-900 leading-tight hover:text-vd-green">
+                {issue.title}
+              </h2>
+            </Link>
 
             {issue.trend && (
               <span

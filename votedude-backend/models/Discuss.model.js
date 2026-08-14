@@ -43,6 +43,21 @@ const postSchema = new mongoose.Schema(
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     reportCount: { type: Number, default: 0 },
     replyCount: { type: Number, default: 0 },
+    relatedLaw: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Law",
+      default: null,
+    },
+    relatedNews: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "News",
+      default: null,
+    },
+    relatedIssue: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Issue",
+      default: null,
+    },
   },
   { timestamps: true },
 );

@@ -4,6 +4,7 @@ const {
   getLawById,
   createLaw,
   updateLaw,
+  ensureLawDiscussion,
 } = require("../controllers/law.controllers");
 const { isAuthenticated, authorizeAdmin } = require("../middlewares/auth");
 
@@ -16,5 +17,8 @@ router
   .route("/laws/:id")
   .get(getLawById)
   .put(isAuthenticated, authorizeAdmin, updateLaw);
+router
+  .route("/laws/:id/ensure-discussion")
+  .post(isAuthenticated, ensureLawDiscussion);
 
 module.exports = router;

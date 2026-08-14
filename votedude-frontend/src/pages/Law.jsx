@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import {
   useGetLawsQuery,
   useSearchLawsMutation,
+  useEnsureLawDiscussionMutation,
 } from "../redux/services/lawApi";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const getStatusStyle = (status) => {
   switch (status) {
@@ -34,6 +37,31 @@ const Law = () => {
   const [searchLaws] = useSearchLawsMutation();
 
   const { data, isLoading, isError, error } = useGetLawsQuery();
+
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
+  const [ensureLawDiscussion, { isLoading: ensuring }] =
+    useEnsureLawDiscussionMutation();
+
+  const handleDiscuss = async (bill) => {
+    if (!user) {
+      navigate("/auth", { state: { login: true } });
+      return;
+    }
+
+    const existing = bill.discussionPost?._id || bill.discussionPost;
+    if (existing) {
+      navigate(`/discuss/${existing}`);
+      return;
+    }
+
+    try {
+      const res = await ensureLawDiscussion(bill._id).unwrap();
+      navigate(`/discuss/${res.postId}`);
+    } catch (err) {
+      alert(err?.data?.message || "Could not open discussion");
+    }
+  };
 
   const bills = data?.laws || [];
 
@@ -215,6 +243,8 @@ const Law = () => {
 
                   <button
                     type="button"
+                    disabled={ensuring}
+                    onClick={() => handleDiscuss(bill)}
                     className="h-9 px-4 text-[13px] font-medium text-vd-green-dark border border-vd-green-dark rounded-md hover:bg-vd-green hover:text-white transition-colors"
                   >
                     Discuss

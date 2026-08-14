@@ -4,6 +4,7 @@ const {
   getIssueById,
   createIssue,
   followIssue,
+  ensureIssueDiscussion,
 } = require("../controllers/issue.controllers");
 const { isAuthenticated, authorizeAdmin } = require("../middlewares/auth");
 
@@ -14,5 +15,8 @@ router
 router.route("/issues/search").post(getIssues);
 router.route("/issues/:id").get(getIssueById);
 router.route("/issues/:id/follow").put(isAuthenticated, followIssue);
+router
+  .route("/issues/:id/ensure-discussion")
+  .post(isAuthenticated, ensureIssueDiscussion);
 
 module.exports = router;

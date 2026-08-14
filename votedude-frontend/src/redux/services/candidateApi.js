@@ -6,7 +6,10 @@ export const candidateApi = api.injectEndpoints({
       query: () => "/candidates",
       providesTags: ["Candidate"],
     }),
-
+    getCandidateById: builder.query({
+      query: (id) => `/candidates/${id}`,
+      providesTags: (result, error, id) => [{ type: "Candidate", id }],
+    }),
     searchCandidates: builder.mutation({
       query: (body) => ({
         url: "/candidates/search",
@@ -14,16 +17,11 @@ export const candidateApi = api.injectEndpoints({
         body,
       }),
     }),
-
-    getCandidateById: builder.query({
-      query: (id) => `/candidates/${id}`,
-      providesTags: (result, error, id) => [{ type: "Candidate", id }],
-    }),
   }),
 });
 
 export const {
   useGetCandidatesQuery,
-  useSearchCandidatesMutation,
   useGetCandidateByIdQuery,
+  useSearchCandidatesMutation,
 } = candidateApi;

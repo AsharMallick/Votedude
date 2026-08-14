@@ -21,6 +21,7 @@ import Polls from "./pages/Polls";
 import Profile from "./pages/Profile";
 import Leaderboard from "./pages/Leaderboard";
 import Admin from "./pages/Admin";
+import CandidateDetail from "./pages/CandidateDetail";
 
 export default function App() {
   return (
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/candidates/:id" element={<CandidateDetail />} />{" "}
         </Routes>
         <Footer />
       </BrowserRouter>

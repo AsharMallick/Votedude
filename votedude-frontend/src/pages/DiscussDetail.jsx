@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { api } from "../redux/services/api";
 
@@ -37,6 +37,24 @@ const discussDetailApi = api.injectEndpoints({
 const { useGetPostByIdQuery, useAddReplyMutation, useToggleLikeMutation } =
   discussDetailApi;
 
+function timeAgo(date) {
+  if (!date) return "";
+  const diff = Date.now() - new Date(date).getTime();
+  const d = Math.floor(diff / 86400000);
+  if (d > 1) return `${d} days ago`;
+  if (d === 1) return "1 day ago";
+  const h = Math.floor(diff / 3600000);
+  if (h >= 1) return `${h} hour${h > 1 ? "s" : ""} ago`;
+  return "Just now";
+}
+
+function userHasLiked(likes = [], userId) {
+  if (!userId) return false;
+  return likes.some(
+    (id) => String(id) === String(userId) || String(id?._id) === String(userId),
+  );
+}
+
 export default function DiscussDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -44,18 +62,37 @@ export default function DiscussDetail() {
 
   const { data, isLoading, isError } = useGetPostByIdQuery(id);
   const [addReply, { isLoading: replying }] = useAddReplyMutation();
-  const [toggleLike] = useToggleLikeMutation();
-  const [isLiked, setIsLiked] = useState(false);
+  const [toggleLike, { isLoading: liking }] = useToggleLikeMutation();
 
-  useEffect(() => {
-    if ((data, user, !isLoading)) {
-      setIsLiked(data?.post.likes.includes(user._id));
-    }
-  }, [data, user]);
+  const [isLiked, setIsLiked] = useState(false);
   const [reply, setReply] = useState("");
 
   const post = data?.post;
   const replies = data?.replies || [];
+
+  // Sync like state from server when post/user loads
+  useEffect(() => {
+    if (!post || !user) {
+      setIsLiked(false);
+      return;
+    }
+    setIsLiked(userHasLiked(post.likes, user._id));
+  }, [post, user]);
+
+  const handleLike = async () => {
+    if (!user) {
+      navigate("/auth", { state: { login: true } });
+      return;
+    }
+    // optimistic UI
+    setIsLiked((prev) => !prev);
+    try {
+      await toggleLike(id).unwrap();
+    } catch {
+      // revert on failure
+      setIsLiked((prev) => !prev);
+    }
+  };
 
   const handleReply = async (e) => {
     e.preventDefault();
@@ -80,78 +117,97 @@ export default function DiscussDetail() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
       <Link
         to="/discuss"
-        className="text-[13px] text-vd-green font-medium hover:underline"
+        className="text-[13px] text-vd-green font-medium hover:underline inline-flex items-center gap-1 mb-6"
       >
-        ← Back to discussions
+        ← Back to Discussions
       </Link>
 
-      <article className="bg-white border border-[#00000031] rounded-2xl p-6 mt-4">
-        <div className="text-[12px] font-extrabold text-vd-green uppercase mb-2">
-          {post.category}
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{post.title}</h1>
-        <p className="text-[13px] text-gray-500 mb-4">
-          By {post.author?.name || "Member"} · {post.likes?.length || 0} likes ·{" "}
-          {post.replyCount || replies.length} replies
-        </p>
-        <p className="text-[15px] text-gray-700 leading-relaxed whitespace-pre-wrap">
-          {post.content}
-        </p>
-        <button
-          type="button"
-          onClick={() => {
-            if (!user) {
-              navigate("/auth", { state: { login: true } });
-              return;
-            }
-            toggleLike(id);
-            setIsLiked(() => !isLiked);
-          }}
-          className="mt-4 h-9 px-4 text-[13px] font-medium border border-vd-green text-vd-green rounded-md hover:bg-vd-green hover:text-white transition-colors"
-        >
-          {isLiked ? "Unlike" : "Like"}
-        </button>
-      </article>
+      <div className="grid lg:grid-cols-[1fr_280px] gap-6">
+        <div className="bg-white border border-[#00000014] rounded-2xl p-6 sm:p-8">
+          <p className="text-[12px] font-extrabold text-vd-green tracking-wide uppercase mb-3">
+            Discussion · {post.category}
+          </p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 leading-tight">
+            {post.title}
+          </h1>
+          <p className="text-[13px] text-gray-500 mb-4">
+            Started by {post.author?.name || "Member"} ·{" "}
+            {post.replyCount || replies.length} replies ·{" "}
+            {post.likes?.length || 0} likes
+          </p>
+          <p className="text-[15px] text-gray-700 leading-relaxed whitespace-pre-wrap mb-6">
+            {post.content}
+          </p>
 
-      <section className="mt-8">
-        <h2 className="font-bold text-gray-900 mb-4">Replies</h2>
-        <div className="space-y-3 mb-6">
-          {replies.length === 0 && (
-            <p className="text-sm text-gray-500">No replies yet.</p>
-          )}
-          {replies.map((r) => (
-            <div
-              key={r._id}
-              className="bg-white border border-[#00000031] rounded-xl p-4"
-            >
-              <div className="text-[13px] font-semibold text-gray-900">
-                {r.author?.name || "Member"}
-              </div>
-              <p className="text-[14px] text-gray-700 mt-1">{r.content}</p>
-            </div>
-          ))}
-        </div>
-
-        <form onSubmit={handleReply} className="space-y-3">
-          <textarea
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            placeholder="Write a reply..."
-            rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30 resize-none"
-          />
           <button
-            type="submit"
-            disabled={replying}
-            className="h-10 px-5 bg-vd-green hover:bg-vd-green-dark text-white text-[14px] font-medium rounded-md"
+            type="button"
+            disabled={liking}
+            onClick={handleLike}
+            className={`h-9 px-4 text-[13px] font-medium rounded-md border transition-colors mb-8 ${
+              isLiked
+                ? "bg-vd-green text-white border-vd-green"
+                : "border-vd-green text-vd-green hover:bg-vd-green hover:text-white"
+            }`}
           >
-            {replying ? "Posting..." : "Reply"}
+            {isLiked ? "Unlike" : "Like"}
           </button>
-        </form>
-      </section>
+
+          <div className="space-y-6 mb-8">
+            {replies.map((r) => (
+              <div key={r._id} className="border-t border-gray-100 pt-5">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-semibold text-[14px] text-gray-900">
+                    {r.author?.name || "Member"}
+                  </span>
+                  <span className="text-[12px] text-gray-400">
+                    {timeAgo(r.createdAt)}
+                  </span>
+                </div>
+                <p className="text-[14px] text-gray-700 leading-relaxed">
+                  {r.content}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <form
+            onSubmit={handleReply}
+            className="rounded-xl border border-gray-100 bg-gray-50 p-5"
+          >
+            <h3 className="font-bold text-gray-900 mb-3">Add your voice</h3>
+            <textarea
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              placeholder="Write a civil, useful reply..."
+              rows={4}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-[15px] focus:outline-none focus:ring-2 focus:ring-vd-green/30 resize-none mb-3"
+            />
+            <button
+              type="submit"
+              disabled={replying}
+              className="h-10 px-5 bg-vd-green hover:bg-vd-green-dark text-white text-[14px] font-medium rounded-md"
+            >
+              {replying ? "Posting..." : "Post Reply"}
+            </button>
+          </form>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-white border border-[#00000014] rounded-2xl p-5">
+            <h3 className="font-bold text-gray-900 mb-2">Discussion rules</h3>
+            <p className="text-[13px] text-gray-500 leading-relaxed">
+              Keep it civil, stay on topic, and argue ideas — not people.
+            </p>
+          </div>
+          <div className="bg-white border border-[#00000014] rounded-2xl p-5">
+            <h3 className="font-bold text-gray-900 mb-2">Related</h3>
+            <p className="text-[13px] text-gray-600">{post.category}</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

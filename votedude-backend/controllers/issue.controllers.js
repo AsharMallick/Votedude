@@ -1,6 +1,7 @@
 const Issue = require("../models/Issue.model");
 const { catchAsyncError } = require("../middlewares/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandler");
+const { createLinkedDiscussion } = require("../utils/createLinkedDiscussion");
 
 exports.getIssues = catchAsyncError(async (req, res, next) => {
   const { search, trend } = req.body || {};
@@ -29,6 +30,16 @@ exports.getIssueById = catchAsyncError(async (req, res, next) => {
 
 exports.createIssue = catchAsyncError(async (req, res, next) => {
   const issue = await Issue.create(req.body);
+  const post = await createLinkedDiscussion({
+    title: issue.title,
+    content: issue.summary,
+    authorId: req.user._id,
+    related: { relatedIssue: issue._id },
+    type: "Issue",
+  });
+
+  issue.discussionPost = post._id;
+  await issue.save();
   res.status(201).json({ success: true, issue });
 });
 
@@ -36,9 +47,33 @@ exports.followIssue = catchAsyncError(async (req, res, next) => {
   const issue = await Issue.findByIdAndUpdate(
     req.params.id,
     { $inc: { followerCount: 1 } },
-    { new: true }
+    { new: true },
   );
   if (!issue) return next(new ErrorHandler("Issue not found", 404));
 
   res.status(200).json({ success: true, followerCount: issue.followerCount });
+});
+
+exports.ensureIssueDiscussion = catchAsyncError(async (req, res, next) => {
+  const issue = await Issue.findById(req.params.id);
+  if (!issue) return next(new ErrorHandler("Issue not found", 404));
+
+  if (issue.discussionPost) {
+    return res
+      .status(200)
+      .json({ success: true, postId: issue.discussionPost });
+  }
+
+  const post = await createLinkedDiscussion({
+    title: issue.title,
+    content: issue.summary,
+    authorId: req.user._id,
+    related: { relatedIssue: issue._id },
+    type: "Issue",
+  });
+
+  issue.discussionPost = post._id;
+  await issue.save();
+
+  res.status(200).json({ success: true, postId: post._id });
 });

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useGetCandidatesQuery } from "../redux/services/candidateApi";
+import { Link } from "react-router-dom";
 
 const partyBadge = (party = "") => {
   const p = party.toLowerCase();
@@ -155,9 +156,11 @@ export default function Candidates() {
                       )}
                     </div>
                     <div className="min-w-0 pt-0.5">
-                      <h3 className="font-semibold text-[15.5px] text-gray-900 leading-tight">
-                        {c.name}
-                      </h3>
+                      <Link to={`/candidates/${c._id}`}>
+                        <h3 className="font-semibold text-[15.5px] text-gray-900 leading-tight hover:text-vd-green">
+                          {c.name}
+                        </h3>
+                      </Link>
                       <p className="text-[13px] text-gray-500 mt-0.5">
                         {officeLine(c)}
                       </p>

@@ -5,6 +5,7 @@ const { Post } = require("../models/Discuss.model");
 const Petition = require("../models/Petition.model");
 const Law = require("../models/Law.model");
 const Poll = require("../models/Poll.model");
+const Issue = require("../models/Issue.model");
 const Candidate = require("../models/Candidate.model");
 const { catchAsyncError } = require("../middlewares/catchAsyncError");
 const ErrorHandler = require("../utils/errorHandler");
@@ -133,7 +134,24 @@ exports.approveEvent = catchAsyncError(async (req, res, next) => {
 });
 
 exports.removePost = catchAsyncError(async (req, res, next) => {
-  const post = await Post.findByIdAndDelete(req.params.id);
+  const post = await Post.findById(req.params.id);
+  if (post.relatedLaw) {
+    const law = await Law.findById(post.relatedLaw);
+    law.discussionPost = null;
+    await law.save();
+  }
+  if (post.relatedIssue) {
+    const issue = await Issue.findById(post.relatedIssue);
+    issue.discussionPost = null;
+    await issue.save();
+  }
+  if (post.relatedNews) {
+    const news = await News.findById(post.relatedNews);
+    news.discussionPost = null;
+    await news.save();
+  }
+
+  await Post.findByIdAndDelete(req.params.id);
   if (!post) return next(new ErrorHandler("Post not found", 404));
 
   res.status(200).json({ success: true, message: "Post removed" });

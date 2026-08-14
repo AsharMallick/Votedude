@@ -114,6 +114,11 @@ export default function News() {
                     <div className="text-[11px] font-extrabold text-vd-green uppercase tracking-wide mb-1">
                       {item.category}
                     </div>
+                    <Link to={`/news/${item._id}`}>
+                      <h3 className=" hover:text-vd-green font-semibold text-[15px] text-gray-900 leading-snug line-clamp-2 mb-1">
+                        {item.title}
+                      </h3>
+                    </Link>
                     <h3 className="font-semibold text-[15px] text-gray-900 leading-snug line-clamp-2 mb-1">
                       {item.title}
                     </h3>
