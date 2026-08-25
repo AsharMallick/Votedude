@@ -37,11 +37,12 @@ exports.register = catchAsyncError(async (req, res, next) => {
   res
     .status(201)
     .cookie("token", token, {
-      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     })
+
     .json({
       success: true,
       user,
@@ -71,11 +72,12 @@ exports.login = catchAsyncError(async (req, res, next) => {
   res
     .status(200)
     .cookie("token", token, {
-      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     })
+
     .json({
       success: true,
       user,
@@ -84,13 +86,20 @@ exports.login = catchAsyncError(async (req, res, next) => {
 });
 
 exports.logout = catchAsyncError(async (req, res, next) => {
+  // extra safety
   res
     .status(200)
-    .cookie("token", null, {
-      expires: new Date(Date.now()),
+    .cookie("token", "", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
+      expires: new Date(0),
+      maxAge: 0,
+    })
+    .clearCookie("token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
     })
     .json({
       success: true,
