@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-
 const user = require("./routes/user.routes");
 const news = require("./routes/news.routes");
 const event = require("./routes/event.routes");
@@ -19,11 +18,46 @@ const errorMiddleware = require("./middlewares/Error");
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://votedude.vercel.app",
+  "https://votedude.org",
+  "https://www.votedude.org",
+];
+
+// Optional: also read from env (comma-separated)
+if (process.env.FRONTEND_URLS) {
+  process.env.FRONTEND_URLS.split(",").forEach((url) => {
+    const trimmed = url.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
+// Keep single FRONTEND_URL support too
+if (
+  process.env.FRONTEND_URL &&
+  !allowedOrigins.includes(process.env.FRONTEND_URL)
+) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: function (origin, callback) {
+      // Allow Postman / server requests with no Origin header
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
-  }),
+  })
 );
 
 app.use(express.json({ limit: "50mb" }));
