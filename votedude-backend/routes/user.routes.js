@@ -11,7 +11,7 @@ const { isAuthenticated } = require("../middlewares/auth");
 
 router.route("/register").post(register);
 router.route("/login").post(login);
-router.route("/logout").get(isAuthenticated, logout);
+router.route("/logout").get(logout);
 router.route("/me").get(isAuthenticated, getMyDetails);
 router.route("/leaderboard").post(getLeaderboard);
 router.route("/user/:id/profile").get(getProfile);
