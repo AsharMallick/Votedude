@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useGetMeQuery, useLogoutMutation } from "../redux/services/authApi";
 import { logout as logoutAction } from "../redux/reducers/authSlice";
 
@@ -21,18 +21,29 @@ const navLinks = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const user = useSelector((state) => state.auth.user);
-  const { isLoading, isFetching } = useGetMeQuery();
-  const checkingAuth = isLoading || isFetching;
+  const hasToken = !!localStorage.getItem("token");
+
+  // Only call /me when a token exists
+  const { isLoading, isFetching } = useGetMeQuery(undefined, {
+    skip: !hasToken,
+  });
+  const checkingAuth = hasToken && (isLoading || isFetching);
 
   const [logoutApi] = useLogoutMutation();
 
   const handleLogout = async () => {
+    // Clear token FIRST so /me cannot succeed again
+    localStorage.removeItem("token");
+    dispatch(logoutAction());
+
     try {
       await logoutApi().unwrap();
     } catch (_) {}
-    dispatch(logoutAction());
+
+    navigate("/");
   };
 
   return (

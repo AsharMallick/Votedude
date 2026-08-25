@@ -85,26 +85,28 @@ exports.login = catchAsyncError(async (req, res, next) => {
     });
 });
 
-exports.logout = catchAsyncError(async (req, res, next) => {
-  // extra safety
-  res
-    .status(200)
-    .cookie("token", "", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      expires: new Date(0),
-      maxAge: 0,
-    })
-    .clearCookie("token", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    })
-    .json({
-      success: true,
-      message: "Logged out",
-    });
+exports.logout = catchAsyncError(async (req, res) => {
+  // clear cookie no matter how it was set
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "lax",
+  });
+  res.clearCookie("token");
+
+  res.cookie("token", "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    expires: new Date(0),
+    maxAge: 0,
+  });
+
+  res.status(200).json({ success: true, message: "Logged out" });
 });
 
 exports.getMyDetails = catchAsyncError(async (req, res, next) => {

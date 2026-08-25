@@ -52,9 +52,10 @@ exports.googleLogin = catchAsyncError(async (req, res, next) => {
   res
     .status(200)
     .cookie("token", jwtToken, {
-      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       httpOnly: true,
+      secure: true,
       sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     })
     .json({
       success: true,

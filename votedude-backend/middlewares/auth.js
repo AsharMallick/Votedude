@@ -3,7 +3,11 @@ const User = require("../models/User.model");
 const ErrorHandler = require("../utils/errorHandler");
 
 exports.isAuthenticated = async (req, res, next) => {
-  const { token } = req.cookies;
+  let token = req.cookies?.token;
+
+  if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
 
   if (!token) {
     return next(new ErrorHandler("Please login first", 401));
@@ -28,8 +32,8 @@ exports.authorizeAdmin = async (req, res, next) => {
     return next(
       new ErrorHandler(
         `${req.user ? req.user.role : "Guest"} is not allowed`,
-        403
-      )
+        403,
+      ),
     );
   }
   next();

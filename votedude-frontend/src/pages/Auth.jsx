@@ -9,7 +9,7 @@ import {
   useRegisterMutation,
 } from "../redux/services/authApi";
 
-import { setUser } from "../redux/reducers/authSlice";
+import { setCredentials } from "../redux/reducers/authSlice";
 
 export default function Auth() {
   const location = useLocation();
@@ -19,7 +19,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (authUser) navigate("/profile");
-  }, [authUser]);
+  }, [authUser, navigate]);
 
   const [isLogin, setIsLogin] = useState(location.state?.login ?? true);
 
@@ -62,21 +62,16 @@ export default function Auth() {
 
         response = await register({
           name: `${formData.firstName} ${formData.lastName}`.trim(),
-
           email: formData.email,
-
           password: formData.password,
-
           city: formData.city,
         }).unwrap();
       }
 
-      dispatch(setUser(response.user));
-
+      dispatch(setCredentials({ user: response.user, token: response.token }));
       navigate("/");
     } catch (error) {
       console.error(error);
-
       alert(error?.data?.message || "Authentication failed");
     }
   };
@@ -86,18 +81,18 @@ export default function Auth() {
       const response = await googleLogin(
         credentialResponse.credential,
       ).unwrap();
-      dispatch(setUser(response.user));
 
+      dispatch(setCredentials({ user: response.user, token: response.token }));
       navigate("/");
     } catch (err) {
       console.error(err);
+      alert(err?.data?.message || "Google login failed");
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6 py-16">
       <div className="grid lg:grid-cols-2 gap-12 max-w-6xl w-full items-center">
-        {/* Left */}
         <div className="hidden lg:block">
           <p className="text-vd-green font-semibold uppercase tracking-widest">
             Vote Dude
@@ -121,24 +116,20 @@ export default function Auth() {
             <div className="bg-white rounded-xl shadow p-4">
               🗳️ Stay informed with trusted civic news.
             </div>
-
             <div className="bg-white rounded-xl shadow p-4">
               🏀 Join local sports leagues.
             </div>
-
             <div className="bg-white rounded-xl shadow p-4">
               🤝 Build a stronger community.
             </div>
           </div>
         </div>
 
-        {/* Right */}
         <div className="bg-white rounded-3xl shadow-xl p-10">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-slate-900">
               {isLogin ? "Welcome Back" : "Create Account"}
             </h2>
-
             <p className="text-slate-500 mt-2">
               {isLogin
                 ? "Sign in to continue."
@@ -155,9 +146,7 @@ export default function Auth() {
 
           <div className="flex items-center gap-3 mb-6">
             <hr className="flex-1" />
-
             <span className="text-slate-400 text-sm">OR</span>
-
             <hr className="flex-1" />
           </div>
 
@@ -171,7 +160,6 @@ export default function Auth() {
                   onChange={handleChange}
                   className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-vd-green"
                 />
-
                 <input
                   name="lastName"
                   type="text"
@@ -207,7 +195,6 @@ export default function Auth() {
                   onChange={handleChange}
                   className="w-full border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-vd-green"
                 />
-
                 <input
                   name="city"
                   type="text"
@@ -229,8 +216,9 @@ export default function Auth() {
           <div className="text-center mt-6">
             {isLogin ? (
               <p className="text-slate-600">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <button
+                  type="button"
                   onClick={() => setIsLogin(false)}
                   className="text-vd-green font-semibold hover:underline cursor-pointer"
                 >
@@ -241,6 +229,7 @@ export default function Auth() {
               <p className="text-slate-600">
                 Already have an account?{" "}
                 <button
+                  type="button"
                   onClick={() => setIsLogin(true)}
                   className="text-vd-green font-semibold hover:underline cursor-pointer"
                 >
